@@ -1,0 +1,53 @@
+symbol,yahoo_ticker,name,sector
+OGDC,OGDC.KA,Oil & Gas Development Company,Oil & Gas Exploration
+PPL,PPL.KA,Pakistan Petroleum Limited,Oil & Gas Exploration
+MARI,MARI.KA,Mari Petroleum Company,Oil & Gas Exploration
+POL,POL.KA,Pakistan Oilfields Limited,Oil & Gas Exploration
+PSO,PSO.KA,Pakistan State Oil,Oil Marketing Companies
+ATRL,ATRL.KA,Attock Refinery Limited,Refineries
+BYCO,BYCO.KA,Byco Petroleum Pakistan,Refineries
+HUBCO,HUBCO.KA,Hub Power Company,Power Generation & Distribution
+NCPL,NCPL.KA,Nishat Chunian Power,Power Generation & Distribution
+KAPCO,KAPCO.KA,Kot Addu Power Company,Power Generation & Distribution
+KEL,KEL.KA,K-Electric Limited,Power Generation & Distribution
+LUCK,LUCK.KA,Lucky Cement,Cement
+DGKC,DGKC.KA,DG Khan Cement,Cement
+MLCF,MLCF.KA,Maple Leaf Cement Factory,Cement
+ACPL,ACPL.KA,Attock Cement Pakistan,Cement
+KOHC,KOHC.KA,Kohat Cement Company,Cement
+PIOC,PIOC.KA,Pioneer Cement,Cement
+FCCL,FCCL.KA,Fauji Cement Company,Cement
+CHCC,CHCC.KA,Cherat Cement Company,Cement
+HBL,HBL.KA,Habib Bank Limited,Commercial Banks
+UBL,UBL.KA,United Bank Limited,Commercial Banks
+MCB,MCB.KA,MCB Bank Limited,Commercial Banks
+ABL,ABL.KA,Allied Bank Limited,Commercial Banks
+BAFL,BAFL.KA,Bank Alfalah,Commercial Banks
+BAHL,BAHL.KA,Bank Al Habib,Commercial Banks
+NBP,NBP.KA,National Bank of Pakistan,Commercial Banks
+MEBL,MEBL.KA,Meezan Bank,Commercial Banks
+JSBL,JSBL.KA,JS Bank,Commercial Banks
+NML,NML.KA,Nishat Mills,Textile Composite
+GATM,GATM.KA,Gul Ahmed Textile Mills,Textile Composite
+ILP,ILP.KA,International Industries,Textile Composite
+ENGRO,ENGRO.KA,Engro Corporation,Fertilizer
+FFC,FFC.KA,Fauji Fertilizer Company,Fertilizer
+FFBL,FFBL.KA,Fauji Fertilizer Bin Qasim,Fertilizer
+FATIMA,FATIMA.KA,Fatima Fertilizer Company,Fertilizer
+TRG,TRG.KA,TRG Pakistan,Technology & Communication
+SYS,SYS.KA,Systems Limited,Technology & Communication
+NETSOL,NETSOL.KA,NetSol Technologies,Technology & Communication
+AVN,AVN.KA,Avanceon Limited,Technology & Communication
+SEARL,SEARL.KA,The Searle Company,Pharmaceuticals
+GLAXO,GLAXO.KA,GlaxoSmithKline Pakistan,Pharmaceuticals
+AGTL,AGTL.KA,Al-Ghazi Tractors,Automobiles & Parts
+NESTLE,NESTLE.KA,Nestle Pakistan,Food & Personal Care
+ULEVER,ULEVER.KA,Unilever Pakistan Foods,Food & Personal Care
+COLG,COLG.KA,Colgate-Palmolive Pakistan,Food & Personal Care
+ICI,ICI.KA,ICI Pakistan,Chemicals
+ASTL,ASTL.KA,Amreli Steels,Engineering
+ISL,ISL.KA,International Steels,Engineering
+MUGHAL,MUGHAL.KA,Mughal Iron & Steel Industries,Engineering
+PIAC,PIAC.KA,Pakistan International Airlines,Transport
+JDW,JDW.KA,JDW Sugar Mills,Sugar Allied Industries
+HASEEB,HASEEB.KA,Haseeb Waqas Sugar Mills,Sugar Allied Industries

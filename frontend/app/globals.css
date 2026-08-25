@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg:           #060E1A;
+  --surface:      #0A1628;
+  --surface2:     #0F1E38;
+  --surface3:     #152540;
+  --border:       #1C334F;
+  --border-b:     #254466;
+  --accent:       #00C49A;
+  --amber:        #F5A623;
+  --red:          #E0536A;
+  --text1:        #C2D8F0;
+  --text2:        #7A9BBF;
+  --text3:        #3A5570;
+}
+
+html, body {
+  background-color: var(--bg);
+  color: var(--text1);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+}
+
+/* Thin scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border-b); border-radius: 2px; }
+
+/* Tabular numbers everywhere in data contexts */
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* Mono font for data labels */
+.mono { font-family: "JetBrains Mono", "Courier New", monospace; }

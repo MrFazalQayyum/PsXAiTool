@@ -1,0 +1,10 @@
+[build]
+builder = "nixpacks"
+
+# Each Railway service overrides the start command in its dashboard.
+# This file documents the 4 services to create:
+#
+#  1. fastapi-backend   → cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+#  2. celery-worker     → cd backend && celery -A app.core.celery_app worker --loglevel=info --concurrency=2
+#  3. celery-beat       → cd backend && celery -A app.core.celery_app beat --loglevel=info
+#  4. nextjs-frontend   → cd frontend && npm run start

@@ -1,0 +1,453 @@
+{
+  "oil_price_up": {
+    "group": "Oil & Energy",
+    "description": "Global crude oil prices rising",
+    "bullish_tickers": ["OGDC", "PPL", "MARI", "POL"],
+    "bearish_tickers": [],
+    "mixed_tickers": ["PSO"],
+    "bullish_sectors": ["Oil & Gas Exploration"],
+    "bearish_sectors": [],
+    "historical_note": "In 2022 oil rally, OGDC surged 18% over 3 months"
+  },
+  "oil_price_down": {
+    "group": "Oil & Energy",
+    "description": "Global crude oil prices falling",
+    "bullish_tickers": ["PSO", "ATRL"],
+    "bearish_tickers": ["OGDC", "PPL", "MARI", "POL"],
+    "bullish_sectors": ["Oil & Gas Marketing", "Refinery"],
+    "bearish_sectors": ["Oil & Gas Exploration"],
+    "historical_note": "2014 oil crash saw PSO stock rise 12% on lower input costs"
+  },
+  "gas_shortage": {
+    "group": "Oil & Energy",
+    "description": "Natural gas supply shortfall in Pakistan",
+    "bullish_tickers": [],
+    "bearish_tickers": ["SNGPL", "SSGC", "NCPL"],
+    "bullish_sectors": [],
+    "bearish_sectors": ["Power", "Textile"],
+    "historical_note": "Winter 2022-23 gas shortage hurt textile exports significantly"
+  },
+  "energy_subsidy_removed": {
+    "group": "Oil & Energy",
+    "description": "Government removes or reduces energy subsidies",
+    "bullish_tickers": ["HUBCO", "KAPCO", "KEL"],
+    "bearish_tickers": [],
+    "bullish_sectors": ["Power"],
+    "bearish_sectors": ["Cement", "Textile"],
+    "historical_note": null
+  },
+  "opec_production_cut": {
+    "group": "Oil & Energy",
+    "description": "OPEC announces production cuts, supporting oil prices",
+    "bullish_tickers": ["OGDC", "PPL", "MARI", "POL"],
+    "bearish_tickers": ["PSO"],
+    "bullish_sectors": ["Oil & Gas Exploration"],
+    "bearish_sectors": [],
+    "historical_note": "OPEC+ cuts in 2023 saw E&P stocks rally 10-15%"
+  },
+  "circular_debt_resolved": {
+    "group": "Oil & Energy",
+    "description": "Government announces circular debt resolution plan",
+    "bullish_tickers": ["HUBCO", "KAPCO", "KEL", "NCPL"],
+    "bearish_tickers": [],
+    "bullish_sectors": ["Power"],
+    "bearish_sectors": [],
+    "historical_note": "Circular debt settlement in 2019 triggered power sector rally"
+  },
+  "power_outages": {
+    "group": "Oil & Energy",
+    "description": "Severe load shedding or grid failures reported",
+    "bullish_tickers": [],
+    "bearish_tickers": ["LUCK", "MLCF", "DGKC", "NML"],
+    "bullish_sectors": [],
+    "bearish_sectors": ["Cement", "Textile", "Steel & Metals"],
+    "historical_note": null
+  },
+  "sbp_rate_cut": {
+    "group": "Currency & SBP",
+    "description": "State Bank of Pakistan cuts the policy rate",
+    "bullish_tickers": ["LUCK", "DGKC", "MLCF", "ACPL", "ISL", "ASTL", "HBL", "UBL", "MCB"],
+    "bearish_tickers": [],
+    "bullish_sectors": ["Cement", "Steel & Metals", "Banking"],
+    "bearish_sectors": [],
+    "historical_note": "Jun 2024 rate cut cycle saw cement sector gain 20%+ in 6 months"
+  },
+  "sbp_rate_hike": {
+    "group": "Currency & SBP",
+    "description": "State Bank of Pakistan raises the policy rate",
+    "bullish_tickers": ["HBL", "UBL", "MCB", "ABL"],
+    "bearish_tickers": ["LUCK", "MLCF", "DGKC", "ENGRO"],
+    "bullish_sectors": ["Banking"],
+    "bearish_sectors": ["Cement", "Fertilizer"],
+    "historical_note": "2022-2023 rate hike cycle to 22% crushed leveraged sectors"
+  },
+  "pkr_depreciation": {
+    "group": "Currency & SBP",
+    "description": "Pakistani Rupee weakens against the US Dollar",
+    "bullish_tickers": ["NML", "TRG", "SYS", "NETSOL", "AVN"],
+    "bearish_tickers": ["PSO", "NESTLE", "COLG", "GLAXO"],
+    "bullish_sectors": ["Textile", "Technology"],
+    "bearish_sectors": ["Oil & Gas Marketing", "Pharmaceuticals"],
+    "historical_note": "2023 PKR slide to 295 boosted textile exporters 15-25%"
+  },
+  "pkr_appreciation": {
+    "group": "Currency & SBP",
+    "description": "Pakistani Rupee strengthens against the US Dollar",
+    "bullish_tickers": ["PSO", "NESTLE", "COLG", "GLAXO", "ICI"],
+    "bearish_tickers": ["NML", "TRG", "SYS"],
+    "bullish_sectors": ["Oil & Gas Marketing", "Pharmaceuticals", "Consumer"],
+    "bearish_sectors": ["Textile", "Technology"],
+    "historical_note": null
+  },
+  "foreign_reserves_up": {
+    "group": "Currency & SBP",
+    "description": "Pakistan's foreign exchange reserves increase",
+    "bullish_tickers": ["HBL", "UBL", "MCB"],
+    "bearish_tickers": [],
+    "bullish_sectors": ["Banking", "Overall Market"],
+    "bearish_sectors": [],
+    "historical_note": "Reserves recovery in early 2023 triggered broad KSE-100 rally"
+  },
+  "imf_disbursement": {
+    "group": "Currency & SBP",
+    "description": "IMF approves loan tranche or disbursement to Pakistan",
+    "bullish_tickers": ["HBL", "UBL", "MCB", "LUCK", "OGDC"],
+    "bearish_tickers": [],
+    "bullish_sectors": ["Banking", "Cement", "Overall Market"],
+    "bearish_sectors": [],
+    "historical_note": "IMF SBA approval in Jul 2023 saw KSE-100 gain 5% in one day"
+  },
+  "imf_program_risk": {
+    "group": "Currency & SBP",
+    "description": "IMF program under threat or review stalled",
+    "bullish_tickers": [],
+    "bearish_tickers": ["HBL", "UBL", "LUCK", "OGDC"],
+    "bullish_sectors": [],
+    "bearish_sectors": ["Banking", "Overall Market"],
+    "historical_note": "IMF program uncertainty in 2022 caused KSE-100 to drop 10%"
+  },
+  "current_account_surplus": {
+    "group": "Currency & SBP",
+    "description": "Pakistan records a current account surplus",
+    "bullish_tickers": [],
+    "bearish_tickers": [],
+    "bullish_sectors": ["Overall Market"],
+    "bearish_sectors": [],
+    "historical_note": null
+  },
+  "remittances_growth": {
+    "group": "Currency & SBP",
+    "description": "Overseas Pakistani remittances hit record or grow strongly",
+    "bullish_tickers": ["HBL", "UBL", "MCB", "ABL"],
+    "bearish_tickers": [],
+    "bullish_sectors": ["Banking"],
+    "bearish_sectors": [],
+    "historical_note": null
+  },
+  "gdp_growth_strong": {
+    "group": "Pakistan Macro",
+    "description": "Pakistan GDP growth beats expectations",
+    "bullish_tickers": [],
+    "bearish_tickers": [],
+    "bullish_sectors": ["Overall Market"],
+    "bearish_sectors": [],
+    "historical_note": null
+  },
+  "inflation_high": {
+    "group": "Pakistan Macro",
+    "description": "CPI or food inflation reaches alarming levels",
+    "bullish_tickers": [],
+    "bearish_tickers": ["LUCK", "DGKC", "ENGRO"],
+    "bullish_sectors": [],
+    "bearish_sectors": ["Cement", "Fertilizer", "Consumer"],
+    "historical_note": "Pakistan 38% inflation peak in May 2023 compressed equity valuations"
+  },
+  "inflation_falling": {
+    "group": "Pakistan Macro",
+    "description": "CPI inflation declines significantly",
+    "bullish_tickers": ["LUCK", "DGKC", "ISL", "HBL"],
+    "bearish_tickers": [],
+    "bullish_sectors": ["Cement", "Steel & Metals", "Banking"],
+    "bearish_sectors": [],
+    "historical_note": "Disinflation in late 2024 led to rate cut cycle and market rally"
+  },
+  "budget_positive": {
+    "group": "Pakistan Macro",
+    "description": "Federal budget includes sector incentives or tax relief",
+    "bullish_tickers": [],
+    "bearish_tickers": [],
+    "bullish_sectors": ["Varies by sector"],
+    "bearish_sectors": [],
+    "historical_note": null
+  },
+  "budget_negative": {
+    "group": "Pakistan Macro",
+    "description": "Federal budget imposes new taxes or removes incentives",
+    "bullish_tickers": [],
+    "bearish_tickers": [],
+    "bullish_sectors": [],
+    "bearish_sectors": ["Varies by sector"],
+    "historical_note": null
+  },
+  "political_instability": {
+    "group": "Pakistan Macro",
+    "description": "Political crisis, government change, or constitutional uncertainty",
+    "bullish_tickers": [],
+    "bearish_tickers": ["HBL", "LUCK", "OGDC"],
+    "bullish_sectors": [],
+    "bearish_sectors": ["Overall Market"],
+    "historical_note": "PTI ouster in Apr 2022 saw KSE-100 fall 3% in single session"
+  },
+  "india_pakistan_tension": {
+    "group": "Geopolitical",
+    "description": "Military or diplomatic tension between India and Pakistan",
+    "bullish_tickers": [],
+    "bearish_tickers": ["LUCK", "OGDC", "HBL"],
+    "bullish_sectors": [],
+    "bearish_sectors": ["Overall Market"],
+    "historical_note": "Pulwama 2019 and 2025 standoff both triggered 3-5% single-day drops"
+  },
+  "middle_east_conflict": {
+    "group": "Geopolitical",
+    "description": "Escalation in Middle East conflict affecting oil prices",
+    "bullish_tickers": ["OGDC", "PPL", "MARI"],
+    "bearish_tickers": ["PSO"],
+    "bullish_sectors": ["Oil & Gas Exploration"],
+    "bearish_sectors": [],
+    "historical_note": null
+  },
+  "us_fed_rate_cut": {
+    "group": "Geopolitical",
+    "description": "US Federal Reserve cuts interest rates",
+    "bullish_tickers": ["HBL", "UBL", "LUCK", "OGDC"],
+    "bearish_tickers": [],
+    "bullish_sectors": ["Overall Market"],
+    "bearish_sectors": [],
+    "historical_note": "Fed rate cuts in 2024 drove EM capital inflows into frontier markets"
+  },
+  "us_recession_fear": {
+    "group": "Geopolitical",
+    "description": "US recession concerns causing global risk-off sentiment",
+    "bullish_tickers": [],
+    "bearish_tickers": ["OGDC", "ISL", "MUGHAL"],
+    "bullish_sectors": [],
+    "bearish_sectors": ["Overall Market"],
+    "historical_note": null
+  },
+  "wheat_price_up": {
+    "group": "Agriculture & Food",
+    "description": "International or domestic wheat prices rising",
+    "bullish_tickers": ["FFC", "FFBL", "FATIMA", "ENGRO"],
+    "bearish_tickers": [],
+    "bullish_sectors": ["Fertilizer"],
+    "bearish_sectors": [],
+    "historical_note": "Ukraine war wheat shock in 2022 boosted fertilizer demand"
+  },
+  "cotton_price_up": {
+    "group": "Agriculture & Food",
+    "description": "Cotton prices rising on global or domestic supply concerns",
+    "bullish_tickers": [],
+    "bearish_tickers": ["NML"],
+    "bullish_sectors": [],
+    "bearish_sectors": ["Textile Spinning"],
+    "historical_note": "High cotton costs squeezed spinning margins significantly in 2022"
+  },
+  "sugar_surplus": {
+    "group": "Agriculture & Food",
+    "description": "Excess domestic sugar production, prices falling",
+    "bullish_tickers": [],
+    "bearish_tickers": ["JDW", "HASEEB"],
+    "bullish_sectors": [],
+    "bearish_sectors": ["Sugar"],
+    "historical_note": null
+  },
+  "sugar_shortage": {
+    "group": "Agriculture & Food",
+    "description": "Sugar shortage or export allowed — prices rising",
+    "bullish_tickers": ["JDW", "HASEEB"],
+    "bearish_tickers": [],
+    "bullish_sectors": ["Sugar"],
+    "bearish_sectors": [],
+    "historical_note": null
+  },
+  "flood_damage": {
+    "group": "Agriculture & Food",
+    "description": "Flood damage to crops and infrastructure reported",
+    "bullish_tickers": [],
+    "bearish_tickers": ["FFC", "FFBL", "NML"],
+    "bullish_sectors": [],
+    "bearish_sectors": ["Fertilizer", "Textile", "Agriculture"],
+    "historical_note": "2022 super floods destroyed 45% of cotton crop, decimating spinners"
+  },
+  "drought_warning": {
+    "group": "Agriculture & Food",
+    "description": "Drought conditions threatening crop yields",
+    "bullish_tickers": ["FFC", "FFBL", "FATIMA", "ENGRO"],
+    "bearish_tickers": [],
+    "bullish_sectors": ["Fertilizer"],
+    "bearish_sectors": [],
+    "historical_note": null
+  },
+  "palm_oil_price_up": {
+    "group": "Agriculture & Food",
+    "description": "Global palm oil prices rising, increasing food costs",
+    "bullish_tickers": [],
+    "bearish_tickers": ["NESTLE", "COLG"],
+    "bullish_sectors": [],
+    "bearish_sectors": ["Consumer Food"],
+    "historical_note": null
+  },
+  "fertilizer_demand_up": {
+    "group": "Agriculture & Food",
+    "description": "Strong demand for urea and DAP fertilizers",
+    "bullish_tickers": ["FFC", "FFBL", "FATIMA", "ENGRO"],
+    "bearish_tickers": [],
+    "bullish_sectors": ["Fertilizer"],
+    "bearish_sectors": [],
+    "historical_note": null
+  },
+  "steel_price_up": {
+    "group": "Metals & Construction",
+    "description": "Long steel or rebar prices rising",
+    "bullish_tickers": ["ISL", "ASTL", "MUGHAL"],
+    "bearish_tickers": [],
+    "bullish_sectors": ["Steel & Metals"],
+    "bearish_sectors": [],
+    "historical_note": null
+  },
+  "cement_demand_up": {
+    "group": "Metals & Construction",
+    "description": "Domestic cement dispatches increasing or government projects announced",
+    "bullish_tickers": ["LUCK", "DGKC", "MLCF", "ACPL", "KOHC", "PIOC", "FCCL", "CHCC"],
+    "bearish_tickers": [],
+    "bullish_sectors": ["Cement"],
+    "bearish_sectors": [],
+    "historical_note": "PSDP-led construction booms reliably lift cement sector 15-30%"
+  },
+  "cement_oversupply": {
+    "group": "Metals & Construction",
+    "description": "Cement capacity additions outpacing demand, margins compress",
+    "bullish_tickers": [],
+    "bearish_tickers": ["LUCK", "DGKC", "MLCF", "ACPL"],
+    "bullish_sectors": [],
+    "bearish_sectors": ["Cement"],
+    "historical_note": null
+  },
+  "psdp_spending_increase": {
+    "group": "Metals & Construction",
+    "description": "Government increases Public Sector Development Programme spending",
+    "bullish_tickers": ["LUCK", "DGKC", "MLCF", "ISL", "ASTL", "MUGHAL"],
+    "bearish_tickers": [],
+    "bullish_sectors": ["Cement", "Steel & Metals"],
+    "bearish_sectors": [],
+    "historical_note": null
+  },
+  "coal_price_up": {
+    "group": "Metals & Construction",
+    "description": "International coal prices rising, increasing input costs for cement",
+    "bullish_tickers": [],
+    "bearish_tickers": ["LUCK", "DGKC", "MLCF", "ACPL"],
+    "bullish_sectors": [],
+    "bearish_sectors": ["Cement"],
+    "historical_note": "Global coal spike post-Ukraine war squeezed cement margins 8-12%"
+  },
+  "copper_price_up": {
+    "group": "Metals & Construction",
+    "description": "Copper prices rising on global demand",
+    "bullish_tickers": [],
+    "bearish_tickers": [],
+    "bullish_sectors": [],
+    "bearish_sectors": [],
+    "historical_note": null
+  },
+  "npl_concerns": {
+    "group": "Banking & Finance",
+    "description": "Rising non-performing loans in the banking sector",
+    "bullish_tickers": [],
+    "bearish_tickers": ["HBL", "UBL", "MCB", "ABL", "NBP"],
+    "bullish_sectors": [],
+    "bearish_sectors": ["Banking"],
+    "historical_note": null
+  },
+  "t_bill_yield_up": {
+    "group": "Banking & Finance",
+    "description": "Treasury bill yields rising — banks earn more on government securities",
+    "bullish_tickers": ["HBL", "UBL", "MCB", "ABL", "MEBL"],
+    "bearish_tickers": [],
+    "bullish_sectors": ["Banking"],
+    "bearish_sectors": ["Cement", "Fertilizer"],
+    "historical_note": "Record T-bill yields in 2023 boosted bank NIMs to historic highs"
+  },
+  "msci_upgrade": {
+    "group": "Banking & Finance",
+    "description": "MSCI considers or confirms upgrade of Pakistan index",
+    "bullish_tickers": ["HBL", "LUCK", "OGDC", "UBL", "MCB"],
+    "bearish_tickers": [],
+    "bullish_sectors": ["Overall Market"],
+    "bearish_sectors": [],
+    "historical_note": "MSCI FM inclusion in 2017 brought $400M FPI inflows in 6 months"
+  },
+  "dividend_income_tax": {
+    "group": "Banking & Finance",
+    "description": "New or increased tax on dividend income announced",
+    "bullish_tickers": [],
+    "bearish_tickers": ["HBL", "UBL", "MCB", "FFC"],
+    "bullish_sectors": [],
+    "bearish_sectors": ["Banking", "Fertilizer"],
+    "historical_note": null
+  },
+  "microfinance_growth": {
+    "group": "Banking & Finance",
+    "description": "Microfinance sector grows strongly or new licenses issued",
+    "bullish_tickers": ["JSBL", "BAHL"],
+    "bearish_tickers": [],
+    "bullish_sectors": ["Banking"],
+    "bearish_sectors": [],
+    "historical_note": null
+  },
+  "global_commodity_rally": {
+    "group": "Global Macro",
+    "description": "Broad commodity supercycle or rally across metals and energy",
+    "bullish_tickers": ["OGDC", "PPL", "ISL", "ASTL", "MUGHAL"],
+    "bearish_tickers": [],
+    "bullish_sectors": ["Oil & Gas Exploration", "Steel & Metals"],
+    "bearish_sectors": [],
+    "historical_note": null
+  },
+  "supply_chain_disruption": {
+    "group": "Global Macro",
+    "description": "Global supply chain disruption affecting raw material imports",
+    "bullish_tickers": [],
+    "bearish_tickers": ["COLG", "NESTLE", "GLAXO", "ICI"],
+    "bullish_sectors": [],
+    "bearish_sectors": ["Consumer", "Pharmaceuticals", "Chemical"],
+    "historical_note": null
+  },
+  "china_slowdown": {
+    "group": "Global Macro",
+    "description": "China economic slowdown reducing global commodity demand",
+    "bullish_tickers": [],
+    "bearish_tickers": ["ISL", "ASTL", "OGDC"],
+    "bullish_sectors": [],
+    "bearish_sectors": ["Steel & Metals", "Oil & Gas Exploration"],
+    "historical_note": null
+  },
+  "yuan_depreciation": {
+    "group": "Global Macro",
+    "description": "Chinese Yuan depreciating, pressuring Pakistani export competitiveness",
+    "bullish_tickers": [],
+    "bearish_tickers": ["NML"],
+    "bullish_sectors": [],
+    "bearish_sectors": ["Textile"],
+    "historical_note": null
+  },
+  "tech_sector_global_boom": {
+    "group": "Global Macro",
+    "description": "Global technology sector rally or AI-driven demand surge",
+    "bullish_tickers": ["TRG", "SYS", "NETSOL", "AVN"],
+    "bearish_tickers": [],
+    "bullish_sectors": ["Technology"],
+    "bearish_sectors": [],
+    "historical_note": "AI boom in 2023-24 lifted SYS and TRG to record highs"
+  }
+}
