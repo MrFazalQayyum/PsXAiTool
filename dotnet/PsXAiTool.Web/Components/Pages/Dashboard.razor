@@ -1,0 +1,208 @@
+@page "/"
+@using PsXAiTool.Core.DTOs
+@using PsXAiTool.Core.Interfaces
+@inject IMarketService MarketService
+@rendermode InteractiveServer
+
+<PageTitle>PSX Intelligence – Dashboard</PageTitle>
+
+<div class="page-header">
+    <h1>PSX Market Dashboard</h1>
+    <span class="last-updated">@(_lastUpdated.HasValue ? $"Updated {_lastUpdated:HH:mm}" : "Loading...")</span>
+</div>
+
+@if (_loading)
+{
+    <div class="loading-bar">Loading market data...</div>
+}
+else
+{
+    <!-- Index Cards -->
+    <div class="card-row">
+        @foreach (var idx in _indices)
+        {
+            <div class="index-card @(idx.ChangePct >= 0 ? "up" : "down")">
+                <div class="index-name">@idx.Name</div>
+                <div class="index-value">@idx.Value.ToString("N0")</div>
+                <div class="index-change">
+                    @(idx.ChangePct >= 0 ? "▲" : "▼") @Math.Abs(idx.ChangePct ?? 0).ToString("F2")%
+                    <span class="change-abs">(@(idx.Change >= 0 ? "+" : "")@idx.Change?.ToString("F0"))</span>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Top Movers -->
+    <div class="section-grid">
+        <div class="panel">
+            <h3>Top Gainers</h3>
+            <table class="data-table">
+                <thead><tr><th>Symbol</th><th>Sector</th><th>Price</th><th>Change</th></tr></thead>
+                <tbody>
+                    @foreach (var m in _gainers)
+                    {
+                        <tr>
+                            <td class="sym">@m.Symbol</td>
+                            <td>@m.Sector</td>
+                            <td>@m.Close.ToString("F2")</td>
+                            <td class="up">+@m.ChangePct.ToString("F2")%</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="panel">
+            <h3>Top Losers</h3>
+            <table class="data-table">
+                <thead><tr><th>Symbol</th><th>Sector</th><th>Price</th><th>Change</th></tr></thead>
+                <tbody>
+                    @foreach (var m in _losers)
+                    {
+                        <tr>
+                            <td class="sym">@m.Symbol</td>
+                            <td>@m.Sector</td>
+                            <td>@m.Close.ToString("F2")</td>
+                            <td class="down">@m.ChangePct.ToString("F2")%</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Sector Performance -->
+    <div class="panel">
+        <h3>Sector Performance</h3>
+        <div class="sector-grid">
+            @foreach (var s in _sectors)
+            {
+                <div class="sector-cell @(s.AvgChangePct >= 0 ? "up" : "down")">
+                    <div class="sector-name">@s.Sector</div>
+                    <div class="sector-change">@(s.AvgChangePct >= 0 ? "+" : "")@s.AvgChangePct.ToString("F2")%</div>
+                    <div class="sector-count">@s.CompanyCount companies</div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- All Stocks Table -->
+    <div class="panel">
+        <h3>All Stocks</h3>
+        <div class="table-scroll">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Symbol</th><th>Company</th><th>Sector</th>
+                        <th>Price</th><th>Change %</th><th>Volume</th><th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var stock in _stocks)
+                    {
+                        <tr @onclick="() => SelectStock(stock.Symbol)" class="@(_selectedSymbol == stock.Symbol ? "selected" : "")">
+                            <td class="sym">@stock.Symbol</td>
+                            <td>@stock.Name</td>
+                            <td>@stock.Sector</td>
+                            <td>@(stock.LastClose?.ToString("F2") ?? "—")</td>
+                            <td class="@(stock.ChangePct >= 0 ? "up" : "down")">
+                                @(stock.ChangePct.HasValue ? $"{(stock.ChangePct >= 0 ? "+" : "")}{stock.ChangePct:F2}%" : "—")
+                            </td>
+                            <td>@(stock.Volume?.ToString("N0") ?? "—")</td>
+                            <td>@(stock.LastDate?.ToString("dd MMM") ?? "—")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Price Chart -->
+    @if (_selectedSymbol is not null)
+    {
+        <div class="panel">
+            <h3>@_selectedSymbol – Price History (90 days)</h3>
+            @if (_priceData.Count > 0)
+            {
+                <div class="chart-container">
+                    <svg viewBox="0 0 800 200" class="price-chart">
+                        @{
+                            var min = _priceData.Min(p => p.Low);
+                            var max = _priceData.Max(p => p.High);
+                            var range = max - min == 0 ? 1 : max - min;
+                            var w = 800m / _priceData.Count;
+                        }
+                        @for (int i = 0; i < _priceData.Count; i++)
+                        {
+                            var p = _priceData[i];
+                            var x = i * w + w / 2;
+                            var yClose = 200 - ((p.Close - min) / range * 190 + 5);
+                            var isUp = p.Close >= p.Open;
+                            var yHigh = 200 - ((p.High - min) / range * 190 + 5);
+                            var yLow = 200 - ((p.Low - min) / range * 190 + 5);
+                            var yOpen = 200 - ((p.Open - min) / range * 190 + 5);
+                            <line x1="@x" y1="@yHigh" x2="@x" y2="@yLow" stroke="#444" stroke-width="1" />
+                            <rect x="@(x - w * 0.3m)" y="@Math.Min(yClose, yOpen)"
+                                  width="@(w * 0.6m)" height="@Math.Abs(yClose - yOpen)"
+                                  fill="@(isUp ? "#00C49A" : "#FF6B6B")" />
+                        }
+                    </svg>
+                </div>
+            }
+            else
+            {
+                <p class="dim">No price data available.</p>
+            }
+        </div>
+    }
+}
+
+@code {
+    private bool _loading = true;
+    private DateTime? _lastUpdated;
+    private List<IndexDto> _indices = new();
+    private List<TopMoverDto> _gainers = new();
+    private List<TopMoverDto> _losers = new();
+    private List<SectorDto> _sectors = new();
+    private List<StockDto> _stocks = new();
+    private List<PricePointDto> _priceData = new();
+    private string? _selectedSymbol;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _loading = true;
+        try
+        {
+            var indicesTask = MarketService.GetIndicesAsync();
+            var moversTask = MarketService.GetTopMoversAsync(5);
+            var sectorsTask = MarketService.GetSectorsAsync();
+            var stocksTask = MarketService.GetStocksAsync();
+            await Task.WhenAll(indicesTask, moversTask, sectorsTask, stocksTask);
+            var indices = await indicesTask;
+            var movers = await moversTask;
+            var sectors = await sectorsTask;
+            var stocks = await stocksTask;
+
+            _indices = indices.ToList();
+            _gainers = movers.Where(m => m.ChangePct >= 0).OrderByDescending(m => m.ChangePct).Take(5).ToList();
+            _losers = movers.Where(m => m.ChangePct < 0).OrderBy(m => m.ChangePct).Take(5).ToList();
+            _sectors = sectors.ToList();
+            _stocks = stocks.ToList();
+            _lastUpdated = DateTime.Now;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SelectStock(string symbol)
+    {
+        _selectedSymbol = symbol;
+        _priceData = (await MarketService.GetStockPricesAsync(symbol, 90)).ToList();
+    }
+}

@@ -1,0 +1,42 @@
+## .NET / C# gitignore
+
+# Build output
+[Bb]in/
+[Oo]bj/
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# User-specific files
+*.user
+*.userosscache
+*.suo
+*.userprefs
+.vs/
+*.rsuser
+
+# Test results
+TestResults/
+*.trx
+*.coveragexml
+*.coverage
+
+# Publish output
+publish/
+**/Properties/launchSettings.json
+
+# Secrets (never commit these)
+appsettings.Development.json
+*.pfx
+*.p12
+secrets.json
+
+# OS
+.DS_Store
+Thumbs.db

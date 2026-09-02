@@ -1,0 +1,124 @@
+@page "/admin"
+@using PsXAiTool.Core.DTOs
+@using PsXAiTool.Core.Interfaces
+@inject ISignalService SignalService
+@inject IMarketService MarketService
+@inject INotificationService NotificationService
+@rendermode InteractiveServer
+
+<PageTitle>Admin – PSX Intelligence</PageTitle>
+
+<div class="page-header">
+    <h1>Admin Panel</h1>
+</div>
+
+<!-- Manual Triggers -->
+<div class="panel">
+    <h3>Manual Triggers</h3>
+    <div class="action-row">
+        <div class="action-card">
+            <div class="action-title">Fetch Market Prices</div>
+            <div class="action-desc dim">Pull latest OHLCV data from Yahoo Finance for all active companies.</div>
+            <button class="btn btn-primary" @onclick="() => RunAction(FetchPrices)" disabled="@_busy">
+                @(_activeAction == nameof(FetchPrices) ? "Running..." : "Trigger")
+            </button>
+        </div>
+        <div class="action-card">
+            <div class="action-title">Process News & Signals</div>
+            <div class="action-desc dim">Scrape RSS feeds + PSX announcements, filter, and extract signals with Claude.</div>
+            <button class="btn btn-primary" @onclick="() => RunAction(ProcessNews)" disabled="@_busy">
+                @(_activeAction == nameof(ProcessNews) ? "Running..." : "Trigger")
+            </button>
+        </div>
+        <div class="action-card">
+            <div class="action-title">Generate Daily Briefing</div>
+            <div class="action-desc dim">Use Claude Sonnet to produce a morning market briefing from recent signals.</div>
+            <button class="btn btn-primary" @onclick="() => RunAction(GenerateBriefing)" disabled="@_busy">
+                @(_activeAction == nameof(GenerateBriefing) ? "Running..." : "Trigger")
+            </button>
+        </div>
+        <div class="action-card">
+            <div class="action-title">Validate Signals</div>
+            <div class="action-desc dim">Compare yesterday's signals against actual price moves to compute accuracy.</div>
+            <button class="btn btn-primary" @onclick="() => RunAction(ValidateSignals)" disabled="@_busy">
+                @(_activeAction == nameof(ValidateSignals) ? "Running..." : "Trigger")
+            </button>
+        </div>
+    </div>
+    @if (!string.IsNullOrEmpty(_actionMessage))
+    {
+        <div class="action-result @(_actionSuccess ? "success" : "error")">@_actionMessage</div>
+    }
+</div>
+
+<!-- Briefing History -->
+<div class="panel">
+    <h3>Recent Briefings</h3>
+    @if (_briefings.Count == 0)
+    {
+        <p class="dim">No briefings generated yet.</p>
+    }
+    @foreach (var b in _briefings)
+    {
+        <div class="briefing-card">
+            <div class="briefing-meta dim">@b.CreatedAt.ToString("dd MMM yyyy HH:mm") · @b.SignalCount signals · @(b.AccuracyPct.HasValue ? $"{b.AccuracyPct:F1}% accuracy" : "no validation")</div>
+            <div class="briefing-content">@b.Content</div>
+        </div>
+    }
+</div>
+
+<!-- Push Notification Setup -->
+<div class="panel">
+    <h3>Push Notifications</h3>
+    <p class="dim">Subscriber count: <strong>@_subscriberCount</strong></p>
+    <div class="vapid-info">
+        <span class="dim">VAPID Public Key:</span>
+        <code>@(_vapidKey.Length > 20 ? _vapidKey[..20] + "..." : _vapidKey)</code>
+    </div>
+</div>
+
+@code {
+    private bool _busy;
+    private string? _activeAction;
+    private string? _actionMessage;
+    private bool _actionSuccess;
+    private List<BriefingDto> _briefings = new();
+    private int _subscriberCount;
+    private string _vapidKey = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _briefings = (await SignalService.GetBriefingsAsync(10)).ToList();
+        _subscriberCount = await NotificationService.GetSubscriberCountAsync();
+        _vapidKey = NotificationService.GetVapidPublicKey();
+    }
+
+    private async Task RunAction(Func<Task> action, [System.Runtime.CompilerServices.CallerMemberName] string? name = null)
+    {
+        _busy = true;
+        _activeAction = name;
+        _actionMessage = null;
+        try
+        {
+            await action();
+            _actionSuccess = true;
+            _actionMessage = $"{name} completed successfully.";
+            _briefings = (await SignalService.GetBriefingsAsync(10)).ToList();
+        }
+        catch (Exception ex)
+        {
+            _actionSuccess = false;
+            _actionMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            _busy = false;
+            _activeAction = null;
+        }
+    }
+
+    private Task FetchPrices() => MarketService.FetchAndStorePricesAsync();
+    private Task ProcessNews() => SignalService.TriggerNewsProcessingAsync();
+    private Task GenerateBriefing() => SignalService.TriggerBriefingAsync();
+    private Task ValidateSignals() => SignalService.TriggerValidationAsync();
+}
