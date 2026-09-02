@@ -17,7 +17,19 @@ public static class InfrastructureExtensions
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration config)
     {
         var settings = config.GetSection("App").Get<AppSettings>() ?? new AppSettings();
-        services.Configure<AppSettings>(config.GetSection("App"));
+
+        // Railway provides DATABASE_URL as a postgresql:// URI; convert it to Npgsql format
+        var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+        if (!string.IsNullOrEmpty(databaseUrl))
+            settings.ConnectionString = ParseDatabaseUrl(databaseUrl);
+
+        // Allow individual Railway env vars to override specific AppSettings values
+        settings.AnthropicApiKey = Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY") ?? settings.AnthropicApiKey;
+        settings.VapidPublicKey  = Environment.GetEnvironmentVariable("VAPID_PUBLIC_KEY")  ?? settings.VapidPublicKey;
+        settings.VapidPrivateKey = Environment.GetEnvironmentVariable("VAPID_PRIVATE_KEY") ?? settings.VapidPrivateKey;
+
+        // Register the resolved settings so IOptions<AppSettings> sees env-var values too
+        services.AddSingleton(Microsoft.Extensions.Options.Options.Create(settings));
 
         // EF Core + PostgreSQL
         services.AddDbContext<AppDbContext>(options =>
@@ -59,5 +71,37 @@ public static class InfrastructureExtensions
         services.AddScoped<CompanySeed>();
 
         return services;
+    }
+
+    /// <summary>
+    /// Converts a Railway postgresql:// URI to an Npgsql connection string.
+    /// Input:  postgresql://user:pass@host:5432/dbname
+    /// Output: Host=host;Port=5432;Database=dbname;Username=user;Password=pass;SSL Mode=Require;Trust Server Certificate=true
+    /// </summary>
+    private static string ParseDatabaseUrl(string url)
+    {
+        // Strip scheme
+        url = url.Replace("postgresql://", "").Replace("postgres://", "");
+
+        // user:pass@host:port/db
+        var atIdx      = url.IndexOf('@');
+        var userInfo   = url[..atIdx];
+        var hostPart   = url[(atIdx + 1)..];
+
+        var colonInUser = userInfo.IndexOf(':');
+        var user     = Uri.UnescapeDataString(userInfo[..colonInUser]);
+        var pass     = Uri.UnescapeDataString(userInfo[(colonInUser + 1)..]);
+
+        var slashIdx = hostPart.IndexOf('/');
+        var hostPort = hostPart[..slashIdx];
+        var db       = hostPart[(slashIdx + 1)..];
+
+        var colonInHost = hostPort.LastIndexOf(':');
+        var host = hostPort[..colonInHost];
+        var portStr = hostPort[(colonInHost + 1)..];
+
+        // Railway PostgreSQL requires SSL
+        return $"Host={host};Port={portStr};Database={db};Username={user};Password={pass};" +
+               "SSL Mode=Require;Trust Server Certificate=true";
     }
 }
