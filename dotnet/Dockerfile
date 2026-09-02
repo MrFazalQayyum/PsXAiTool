@@ -2,17 +2,16 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy solution and project files first for layer caching
-COPY PsXAiTool.sln .
-COPY PsXAiTool.Core/PsXAiTool.Core.csproj            PsXAiTool.Core/
-COPY PsXAiTool.Infrastructure/PsXAiTool.Infrastructure.csproj PsXAiTool.Infrastructure/
-COPY PsXAiTool.Web/PsXAiTool.Web.csproj              PsXAiTool.Web/
-COPY PsXAiTool.Tests/PsXAiTool.Tests.csproj          PsXAiTool.Tests/
+# Build context is repo root, so all paths need the dotnet/ prefix
+COPY dotnet/PsXAiTool.sln .
+COPY dotnet/PsXAiTool.Core/PsXAiTool.Core.csproj                         PsXAiTool.Core/
+COPY dotnet/PsXAiTool.Infrastructure/PsXAiTool.Infrastructure.csproj      PsXAiTool.Infrastructure/
+COPY dotnet/PsXAiTool.Web/PsXAiTool.Web.csproj                            PsXAiTool.Web/
+COPY dotnet/PsXAiTool.Tests/PsXAiTool.Tests.csproj                        PsXAiTool.Tests/
 
 RUN dotnet restore
 
-# Copy everything else and publish
-COPY . .
+COPY dotnet/ .
 RUN dotnet publish PsXAiTool.Web/PsXAiTool.Web.csproj \
     -c Release -o /app/publish --no-restore
 
@@ -22,11 +21,10 @@ WORKDIR /app
 
 COPY --from=build /app/publish .
 
-# Copy the PSX companies CSV so CompanySeed can find it at /app/data/psx_companies.csv
+# CSV lives at repo root data/ — reachable because build context is repo root
 COPY data/psx_companies.csv /app/data/psx_companies.csv
 
 ENV ASPNETCORE_ENVIRONMENT=Production
-# Railway injects PORT; bind to it
 ENV ASPNETCORE_URLS=http://+:${PORT:-8080}
 
 EXPOSE 8080
