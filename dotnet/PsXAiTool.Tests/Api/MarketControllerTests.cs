@@ -14,7 +14,7 @@ public class MarketControllerTests
 
     public MarketControllerTests()
     {
-        _sut = new MarketController(_market.Object);
+        _sut = new MarketController(_market.Object, null!);
     }
 
     [Fact]

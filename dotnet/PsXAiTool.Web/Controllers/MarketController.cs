@@ -1,12 +1,28 @@
 using Microsoft.AspNetCore.Mvc;
 using PsXAiTool.Core.Interfaces;
+using PsXAiTool.Infrastructure.Scrapers;
 
 namespace PsXAiTool.Web.Controllers;
 
 [ApiController]
 [Route("api/market")]
-public class MarketController(IMarketService market) : ControllerBase
+public class MarketController(IMarketService market, YahooFinanceScraper scraper) : ControllerBase
 {
+    [HttpGet("test-scraper")]
+    public async Task<IActionResult> TestScraper([FromQuery] string symbol = "OGDC")
+    {
+        var prices = await scraper.FetchPricesAsync(symbol + ".KA", symbol, 10);
+        return Ok(new
+        {
+            symbol,
+            recordsReturned = prices.Count,
+            latest = prices.LastOrDefault() is { } p
+                ? new { p.Date, p.Open, p.High, p.Low, p.Close, p.Volume }
+                : null
+        });
+    }
+
+
     [HttpGet("indices")]
     public async Task<IActionResult> GetIndices() => Ok(await market.GetIndicesAsync());
 
