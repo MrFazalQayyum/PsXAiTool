@@ -125,20 +125,37 @@ public class MarketService(
         return prices;
     }
 
-    public async Task FetchAndStorePricesAsync()
+    public async Task<(int Companies, int PricesSaved)> FetchAndStorePricesAsync()
     {
         var companies = await db.Companies.Where(c => c.IsActive).ToListAsync();
         logger.LogInformation("Fetching prices for {Count} companies.", companies.Count);
+
+        // Load all existing (symbol, date) keys in one query to avoid N+1 AnyAsync calls
+        var cutoff = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-120);
+        var existingKeys = await db.DailyPrices
+            .Where(p => p.Date >= cutoff)
+            .Select(p => new { p.Symbol, p.Date })
+            .ToListAsync();
+        var existingSet = existingKeys.Select(x => $"{x.Symbol}:{x.Date}").ToHashSet();
+
+        int saved = 0;
+        int fetched = 0;
 
         foreach (var company in companies)
         {
             try
             {
                 var prices = await yahooScraper.FetchPricesAsync(company.YahooTicker, company.Symbol);
+                fetched += prices.Count;
                 foreach (var price in prices)
                 {
-                    var exists = await db.DailyPrices.AnyAsync(p => p.Date == price.Date && p.Symbol == price.Symbol);
-                    if (!exists) db.DailyPrices.Add(price);
+                    var key = $"{price.Symbol}:{price.Date}";
+                    if (!existingSet.Contains(key))
+                    {
+                        db.DailyPrices.Add(price);
+                        existingSet.Add(key);
+                        saved++;
+                    }
                 }
             }
             catch (Exception ex)
@@ -148,7 +165,10 @@ public class MarketService(
         }
 
         await db.SaveChangesAsync();
+        logger.LogInformation("Saved {Saved} new price records from {Fetched} fetched.", saved, fetched);
+
         await FetchIndicesAsync();
+        return (companies.Count, saved);
     }
 
     private async Task FetchIndicesAsync()

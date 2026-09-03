@@ -47,8 +47,12 @@ public static class InfrastructureExtensions
         services.AddHttpClient<ClaudeService>();
         services.AddHttpClient<YahooFinanceScraper>(c =>
         {
+            c.Timeout = TimeSpan.FromSeconds(20);
             c.DefaultRequestHeaders.Add("User-Agent",
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
+            c.DefaultRequestHeaders.Add("Accept", "application/json,text/html,*/*");
+            c.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.9");
+            c.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
         });
         services.AddHttpClient<NewsScraperService>(c =>
         {

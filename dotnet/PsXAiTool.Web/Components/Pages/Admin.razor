@@ -19,29 +19,29 @@
         <div class="action-card">
             <div class="action-title">Fetch Market Prices</div>
             <div class="action-desc dim">Pull latest OHLCV data from Yahoo Finance for all active companies.</div>
-            <button class="btn btn-primary" @onclick="() => RunAction(FetchPrices)" disabled="@_busy">
-                @(_activeAction == nameof(FetchPrices) ? "Running..." : "Trigger")
+            <button class="btn btn-primary" @onclick="FetchPrices" disabled="@_busy">
+                @(_busy && _activeAction == "prices" ? "Running..." : "Trigger")
             </button>
         </div>
         <div class="action-card">
             <div class="action-title">Process News & Signals</div>
             <div class="action-desc dim">Scrape RSS feeds + PSX announcements, filter, and extract signals with Claude.</div>
-            <button class="btn btn-primary" @onclick="() => RunAction(ProcessNews)" disabled="@_busy">
-                @(_activeAction == nameof(ProcessNews) ? "Running..." : "Trigger")
+            <button class="btn btn-primary" @onclick="ProcessNews" disabled="@_busy">
+                @(_busy && _activeAction == "news" ? "Running..." : "Trigger")
             </button>
         </div>
         <div class="action-card">
             <div class="action-title">Generate Daily Briefing</div>
             <div class="action-desc dim">Use Claude Sonnet to produce a morning market briefing from recent signals.</div>
-            <button class="btn btn-primary" @onclick="() => RunAction(GenerateBriefing)" disabled="@_busy">
-                @(_activeAction == nameof(GenerateBriefing) ? "Running..." : "Trigger")
+            <button class="btn btn-primary" @onclick="GenerateBriefing" disabled="@_busy">
+                @(_busy && _activeAction == "briefing" ? "Running..." : "Trigger")
             </button>
         </div>
         <div class="action-card">
             <div class="action-title">Validate Signals</div>
             <div class="action-desc dim">Compare yesterday's signals against actual price moves to compute accuracy.</div>
-            <button class="btn btn-primary" @onclick="() => RunAction(ValidateSignals)" disabled="@_busy">
-                @(_activeAction == nameof(ValidateSignals) ? "Running..." : "Trigger")
+            <button class="btn btn-primary" @onclick="ValidateSignals" disabled="@_busy">
+                @(_busy && _activeAction == "validate" ? "Running..." : "Trigger")
             </button>
         </div>
     </div>
@@ -93,32 +93,58 @@
         _vapidKey = NotificationService.GetVapidPublicKey();
     }
 
-    private async Task RunAction(Func<Task> action, [System.Runtime.CompilerServices.CallerMemberName] string? name = null)
+    private async Task FetchPrices()
     {
-        _busy = true;
-        _activeAction = name;
-        _actionMessage = null;
+        _busy = true; _activeAction = "prices"; _actionMessage = null;
         try
         {
-            await action();
+            var (companies, saved) = await MarketService.FetchAndStorePricesAsync();
             _actionSuccess = true;
-            _actionMessage = $"{name} completed successfully.";
-            _briefings = (await SignalService.GetBriefingsAsync(10)).ToList();
+            _actionMessage = saved > 0
+                ? $"Done — {saved} new price records saved across {companies} companies."
+                : $"Done — 0 new records from {companies} companies. Yahoo Finance may be rate-limiting or all data is already current.";
         }
-        catch (Exception ex)
-        {
-            _actionSuccess = false;
-            _actionMessage = $"Error: {ex.Message}";
-        }
-        finally
-        {
-            _busy = false;
-            _activeAction = null;
-        }
+        catch (Exception ex) { _actionSuccess = false; _actionMessage = $"Error: {ex.Message}"; }
+        finally { _busy = false; _activeAction = null; }
     }
 
-    private Task FetchPrices() => MarketService.FetchAndStorePricesAsync();
-    private Task ProcessNews() => SignalService.TriggerNewsProcessingAsync();
-    private Task GenerateBriefing() => SignalService.TriggerBriefingAsync();
-    private Task ValidateSignals() => SignalService.TriggerValidationAsync();
+    private async Task ProcessNews()
+    {
+        _busy = true; _activeAction = "news"; _actionMessage = null;
+        try
+        {
+            await SignalService.TriggerNewsProcessingAsync();
+            _actionSuccess = true;
+            _actionMessage = "News processed. Check AI Signals page for new signals.";
+        }
+        catch (Exception ex) { _actionSuccess = false; _actionMessage = $"Error: {ex.Message}"; }
+        finally { _busy = false; _activeAction = null; }
+    }
+
+    private async Task GenerateBriefing()
+    {
+        _busy = true; _activeAction = "briefing"; _actionMessage = null;
+        try
+        {
+            await SignalService.TriggerBriefingAsync();
+            _briefings = (await SignalService.GetBriefingsAsync(10)).ToList();
+            _actionSuccess = true;
+            _actionMessage = "Daily briefing generated successfully.";
+        }
+        catch (Exception ex) { _actionSuccess = false; _actionMessage = $"Error: {ex.Message}"; }
+        finally { _busy = false; _activeAction = null; }
+    }
+
+    private async Task ValidateSignals()
+    {
+        _busy = true; _activeAction = "validate"; _actionMessage = null;
+        try
+        {
+            await SignalService.TriggerValidationAsync();
+            _actionSuccess = true;
+            _actionMessage = "Signal validation complete.";
+        }
+        catch (Exception ex) { _actionSuccess = false; _actionMessage = $"Error: {ex.Message}"; }
+        finally { _busy = false; _activeAction = null; }
+    }
 }

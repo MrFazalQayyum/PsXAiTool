@@ -85,7 +85,7 @@ public class MarketControllerTests
     [Fact]
     public async Task TriggerFetch_CallsFetchAndReturnsOk()
     {
-        _market.Setup(m => m.FetchAndStorePricesAsync()).Returns(Task.CompletedTask);
+        _market.Setup(m => m.FetchAndStorePricesAsync()).ReturnsAsync((5, 100));
 
         var result = await _sut.TriggerFetch();
 

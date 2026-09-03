@@ -9,5 +9,5 @@ public interface IMarketService
     Task<IReadOnlyList<SectorDto>> GetSectorsAsync();
     Task<IReadOnlyList<StockDto>> GetStocksAsync();
     Task<IReadOnlyList<PricePointDto>> GetStockPricesAsync(string symbol, int days = 90);
-    Task FetchAndStorePricesAsync();
+    Task<(int Companies, int PricesSaved)> FetchAndStorePricesAsync();
 }
