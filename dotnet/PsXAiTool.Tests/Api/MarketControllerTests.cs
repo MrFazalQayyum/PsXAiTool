@@ -14,7 +14,7 @@ public class MarketControllerTests
 
     public MarketControllerTests()
     {
-        _sut = new MarketController(_market.Object, null!);
+        _sut = new MarketController(_market.Object, null!); // null: TwelveDataScraper not used by these tests
     }
 
     [Fact]

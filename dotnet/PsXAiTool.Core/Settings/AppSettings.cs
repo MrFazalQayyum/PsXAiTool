@@ -6,6 +6,7 @@ public class AppSettings
     public string AnthropicApiKey { get; set; } = string.Empty;
     public string VapidPublicKey { get; set; } = string.Empty;
     public string VapidPrivateKey { get; set; } = string.Empty;
+    public string TwelveDataApiKey { get; set; } = string.Empty;
     public string VapidSubject { get; set; } = "mailto:admin@example.com";
     public string HaikuModel { get; set; } = "claude-haiku-4-5-20251001";
     public string SonnetModel { get; set; } = "claude-sonnet-5";

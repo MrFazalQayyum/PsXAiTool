@@ -6,18 +6,20 @@ namespace PsXAiTool.Web.Controllers;
 
 [ApiController]
 [Route("api/market")]
-public class MarketController(IMarketService market, YahooFinanceScraper scraper) : ControllerBase
+public class MarketController(IMarketService market, TwelveDataScraper twelveData) : ControllerBase
 {
     [HttpGet("test-scraper")]
     public async Task<IActionResult> TestScraper([FromQuery] string symbol = "OGDC")
     {
-        var prices = await scraper.FetchPricesAsync(symbol + ".KA", symbol, 10);
+        var results = await twelveData.FetchBatchAsync([symbol], 10);
+        var prices = results.TryGetValue(symbol, out var p) ? p : [];
         return Ok(new
         {
             symbol,
+            source = "TwelveData (XKAR)",
             recordsReturned = prices.Count,
-            latest = prices.LastOrDefault() is { } p
-                ? new { p.Date, p.Open, p.High, p.Low, p.Close, p.Volume }
+            latest = prices.LastOrDefault() is { } last
+                ? new { last.Date, last.Open, last.High, last.Low, last.Close, last.Volume }
                 : null
         });
     }

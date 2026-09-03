@@ -24,9 +24,10 @@ public static class InfrastructureExtensions
             settings.ConnectionString = ParseDatabaseUrl(databaseUrl);
 
         // Allow individual Railway env vars to override specific AppSettings values
-        settings.AnthropicApiKey = Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY") ?? settings.AnthropicApiKey;
-        settings.VapidPublicKey  = Environment.GetEnvironmentVariable("VAPID_PUBLIC_KEY")  ?? settings.VapidPublicKey;
-        settings.VapidPrivateKey = Environment.GetEnvironmentVariable("VAPID_PRIVATE_KEY") ?? settings.VapidPrivateKey;
+        settings.AnthropicApiKey   = Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY")    ?? settings.AnthropicApiKey;
+        settings.TwelveDataApiKey  = Environment.GetEnvironmentVariable("TWELVE_DATA_API_KEY") ?? settings.TwelveDataApiKey;
+        settings.VapidPublicKey    = Environment.GetEnvironmentVariable("VAPID_PUBLIC_KEY")    ?? settings.VapidPublicKey;
+        settings.VapidPrivateKey   = Environment.GetEnvironmentVariable("VAPID_PRIVATE_KEY")   ?? settings.VapidPrivateKey;
 
         // Register the resolved settings so IOptions<AppSettings> sees env-var values too
         services.AddSingleton(Microsoft.Extensions.Options.Options.Create(settings));
@@ -69,6 +70,8 @@ public static class InfrastructureExtensions
         services.AddScoped<IPrefilterService, PrefilterService>();
 
         // Scrapers / jobs
+        services.AddHttpClient<TwelveDataScraper>(c => c.Timeout = TimeSpan.FromSeconds(30));
+        services.AddScoped<TwelveDataScraper>();
         services.AddScoped<YahooFinanceScraper>();
         services.AddScoped<BackgroundJobs>();
         services.AddScoped<DatabaseMigrator>();

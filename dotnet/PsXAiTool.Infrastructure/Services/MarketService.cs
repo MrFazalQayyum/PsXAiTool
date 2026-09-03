@@ -9,6 +9,7 @@ namespace PsXAiTool.Infrastructure.Services;
 
 public class MarketService(
     AppDbContext db,
+    TwelveDataScraper twelveData,
     YahooFinanceScraper yahooScraper,
     ILogger<MarketService> logger) : IMarketService
 {
@@ -130,7 +131,6 @@ public class MarketService(
         var companies = await db.Companies.Where(c => c.IsActive).ToListAsync();
         logger.LogInformation("Fetching prices for {Count} companies.", companies.Count);
 
-        // Load all existing (symbol, date) keys in one query to avoid N+1 AnyAsync calls
         var cutoff = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-120);
         var existingKeys = await db.DailyPrices
             .Where(p => p.Date >= cutoff)
@@ -139,33 +139,44 @@ public class MarketService(
         var existingSet = existingKeys.Select(x => $"{x.Symbol}:{x.Date}").ToHashSet();
 
         int saved = 0;
-        int fetched = 0;
+        var symbols = companies.Select(c => c.Symbol).ToList();
+
+        // Primary: Twelve Data (batch fetch, rate-limited internally)
+        var tdResults = await twelveData.FetchBatchAsync(symbols);
+        logger.LogInformation("Twelve Data returned data for {Count}/{Total} symbols.", tdResults.Count, symbols.Count);
 
         foreach (var company in companies)
         {
-            try
+            var prices = tdResults.TryGetValue(company.Symbol, out var tdPrices) ? tdPrices : null;
+
+            // Fallback: stooq → Yahoo Finance for symbols Twelve Data missed
+            if (prices is null || prices.Count == 0)
             {
-                var prices = await yahooScraper.FetchPricesAsync(company.YahooTicker, company.Symbol);
-                fetched += prices.Count;
-                foreach (var price in prices)
+                try
                 {
-                    var key = $"{price.Symbol}:{price.Date}";
-                    if (!existingSet.Contains(key))
-                    {
-                        db.DailyPrices.Add(price);
-                        existingSet.Add(key);
-                        saved++;
-                    }
+                    prices = await yahooScraper.FetchPricesAsync(company.YahooTicker, company.Symbol);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning("Fallback fetch failed for {Symbol}: {Error}", company.Symbol, ex.Message);
+                    prices = new List<Core.Entities.DailyPrice>();
                 }
             }
-            catch (Exception ex)
+
+            foreach (var price in prices)
             {
-                logger.LogWarning("Price fetch failed for {Symbol}: {Error}", company.Symbol, ex.Message);
+                var key = $"{price.Symbol}:{price.Date}";
+                if (!existingSet.Contains(key))
+                {
+                    db.DailyPrices.Add(price);
+                    existingSet.Add(key);
+                    saved++;
+                }
             }
         }
 
         await db.SaveChangesAsync();
-        logger.LogInformation("Saved {Saved} new price records from {Fetched} fetched.", saved, fetched);
+        logger.LogInformation("Saved {Saved} new price records.", saved);
 
         await FetchIndicesAsync();
         return (companies.Count, saved);
