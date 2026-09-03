@@ -1,0 +1,159 @@
+@page "/signals"
+@using PsXAiTool.Core.DTOs
+@using PsXAiTool.Core.Enums
+@using PsXAiTool.Core.Interfaces
+@inject ISignalService SignalService
+@rendermode InteractiveServer
+
+<PageTitle>AI Signals – PSX Intelligence</PageTitle>
+
+<div class="page-header">
+    <h1>AI Market Signals</h1>
+    <button class="btn btn-primary" @onclick="TriggerProcessing" disabled="@_processing">
+        @(_processing ? "Processing..." : "Fetch & Process News")
+    </button>
+</div>
+
+@if (_stats is not null)
+{
+    <div class="card-row">
+        <div class="stat-card"><span class="stat-val">@_stats.Total</span><span class="stat-label">Total Signals</span></div>
+        <div class="stat-card up"><span class="stat-val">@_stats.Bullish</span><span class="stat-label">Bullish</span></div>
+        <div class="stat-card down"><span class="stat-val">@_stats.Bearish</span><span class="stat-label">Bearish</span></div>
+        <div class="stat-card"><span class="stat-val">@_stats.Neutral</span><span class="stat-label">Neutral</span></div>
+        @if (_stats.AccuracyPct.HasValue)
+        {
+            <div class="stat-card accent"><span class="stat-val">@_stats.AccuracyPct.Value.ToString("F1")%</span><span class="stat-label">Accuracy</span></div>
+        }
+    </div>
+}
+
+@if (_conflicts.Count > 0)
+{
+    <div class="panel warning-panel">
+        <h3>⚠ Conflicting Signals (24h)</h3>
+        @foreach (var c in _conflicts)
+        {
+            <span class="conflict-chip">@c.Ticker: @c.BullishSignals.Count↑ @c.BearishSignals.Count↓</span>
+        }
+    </div>
+}
+
+<!-- Filters -->
+<div class="filter-bar">
+    <select @bind="_filterDirection" @bind:after="LoadSignalsAsync">
+        <option value="">All Directions</option>
+        <option value="Bullish">Bullish</option>
+        <option value="Bearish">Bearish</option>
+        <option value="Neutral">Neutral</option>
+    </select>
+    <input type="text" placeholder="Ticker filter…" @bind="_filterTicker" @bind:after="LoadSignalsAsync" />
+    <input type="number" placeholder="Min confidence…" step="0.1" min="0" max="1"
+           @bind="_filterMinConf" @bind:after="LoadSignalsAsync" />
+</div>
+
+@if (_loading)
+{
+    <div class="loading-bar">Loading signals...</div>
+}
+else
+{
+    <div class="panel">
+        @foreach (var s in _signals)
+        {
+            <div class="signal-card @s.Direction.ToString().ToLower()">
+                <div class="signal-header">
+                    <span class="direction-badge @s.Direction.ToString().ToLower()">@s.Direction</span>
+                    <span class="signal-type">@s.SignalType</span>
+                    <span class="confidence">@s.Confidence.ToString("P0") confidence</span>
+                    <span class="signal-time dim">@s.CreatedAt.ToString("dd MMM HH:mm")</span>
+                </div>
+                <div class="signal-summary">@s.Summary</div>
+                @if (s.Entities.Count > 0)
+                {
+                    <div class="tag-row">
+                        @foreach (var e in s.Entities) { <span class="tag ticker">@e</span> }
+                        @foreach (var sec in s.Sectors) { <span class="tag sector">@sec</span> }
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(s.HistoricalNote))
+                {
+                    <div class="historical-note dim">📋 @s.HistoricalNote</div>
+                }
+                <div class="raw-headline dim">Source: @s.RawHeadline</div>
+            </div>
+        }
+        @if (_signals.Count == 0)
+        {
+            <p class="dim">No signals match the current filters.</p>
+        }
+    </div>
+
+    <!-- Pagination -->
+    @if (_total > _pageSize)
+    {
+        <div class="pagination">
+            <button @onclick="PrevPage" disabled="@(_page <= 1)">‹ Prev</button>
+            <span>Page @_page of @((_total + _pageSize - 1) / _pageSize)</span>
+            <button @onclick="NextPage" disabled="@(_page * _pageSize >= _total)">Next ›</button>
+        </div>
+    }
+}
+
+@code {
+    private bool _loading = true;
+    private bool _processing;
+    private SignalStatsDto? _stats;
+    private List<ConflictDto> _conflicts = new();
+    private List<SignalDto> _signals = new();
+    private int _total;
+    private int _page = 1;
+    private int _pageSize = 20;
+    private string _filterDirection = "";
+    private string? _filterTicker;
+    private decimal? _filterMinConf;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Sequential — Blazor Server shares one DbContext per circuit
+        await LoadSignalsAsync();
+        await LoadStatsAsync();
+        await LoadConflictsAsync();
+    }
+
+    private async Task LoadSignalsAsync()
+    {
+        _loading = true;
+        try
+        {
+            SignalDirection? dir = _filterDirection switch
+            {
+                "Bullish" => SignalDirection.Bullish,
+                "Bearish" => SignalDirection.Bearish,
+                "Neutral" => SignalDirection.Neutral,
+                _ => null
+            };
+            var filter = new SignalFilterRequest(dir, _filterTicker, _filterMinConf, _page, _pageSize);
+            var (items, total) = await SignalService.GetSignalsAsync(filter);
+            _signals = items.ToList();
+            _total = total;
+        }
+        finally { _loading = false; }
+    }
+
+    private async Task LoadStatsAsync() => _stats = await SignalService.GetStatsAsync();
+    private async Task LoadConflictsAsync() => _conflicts = (await SignalService.GetConflictsAsync()).ToList();
+
+    private async Task TriggerProcessing()
+    {
+        _processing = true;
+        await SignalService.TriggerNewsProcessingAsync();
+        await LoadSignalsAsync();
+        await LoadStatsAsync();
+        await LoadConflictsAsync();
+        _processing = false;
+    }
+
+    private async Task PrevPage() { _page--; await LoadSignalsAsync(); }
+    private async Task NextPage() { _page++; await LoadSignalsAsync(); }
+}

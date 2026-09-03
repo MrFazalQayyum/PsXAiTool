@@ -1,0 +1,27 @@
+name: Fetch PSX Prices
+
+on:
+  schedule:
+    # 10:30 AM UTC = 3:30 PM PKT (PSX market close), Mon–Fri
+    - cron: '30 10 * * 1-5'
+  workflow_dispatch:  # allow manual trigger from GitHub Actions tab
+
+jobs:
+  fetch-prices:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install psycopg2-binary requests
+
+      - name: Fetch and store PSX prices
+        env:
+          DATABASE_URL: ${{ secrets.RAILWAY_DATABASE_URL }}
+        run: python scripts/fetch_prices.py

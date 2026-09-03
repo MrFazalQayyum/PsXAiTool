@@ -1,0 +1,239 @@
+@page "/admin"
+@using PsXAiTool.Core.DTOs
+@using PsXAiTool.Core.Interfaces
+@using PsXAiTool.Core.Entities
+@inject ISignalService SignalService
+@inject IMarketService MarketService
+@inject INotificationService NotificationService
+@inject PsXAiTool.Infrastructure.Data.AppDbContext Db
+@rendermode InteractiveServer
+
+<PageTitle>Admin – PSX Intelligence</PageTitle>
+
+<div class="page-header">
+    <h1>Admin Panel</h1>
+</div>
+
+<!-- Manual Triggers -->
+<div class="panel">
+    <h3>Manual Triggers</h3>
+    <div class="action-row">
+        <div class="action-card">
+            <div class="action-title">Fetch Market Prices</div>
+            <div class="action-desc dim">Pull latest OHLCV data from Yahoo Finance for all active companies.</div>
+            <button class="btn btn-primary" @onclick="FetchPrices" disabled="@_busy">
+                @(_busy && _activeAction == "prices" ? "Running..." : "Trigger")
+            </button>
+        </div>
+        <div class="action-card">
+            <div class="action-title">Process News & Signals</div>
+            <div class="action-desc dim">Scrape RSS feeds + PSX announcements, filter, and extract signals with Claude.</div>
+            <button class="btn btn-primary" @onclick="ProcessNews" disabled="@_busy">
+                @(_busy && _activeAction == "news" ? "Running..." : "Trigger")
+            </button>
+        </div>
+        <div class="action-card">
+            <div class="action-title">Generate Daily Briefing</div>
+            <div class="action-desc dim">Use Claude Sonnet to produce a morning market briefing from recent signals.</div>
+            <button class="btn btn-primary" @onclick="GenerateBriefing" disabled="@_busy">
+                @(_busy && _activeAction == "briefing" ? "Running..." : "Trigger")
+            </button>
+        </div>
+        <div class="action-card">
+            <div class="action-title">Validate Signals</div>
+            <div class="action-desc dim">Compare yesterday's signals against actual price moves to compute accuracy.</div>
+            <button class="btn btn-primary" @onclick="ValidateSignals" disabled="@_busy">
+                @(_busy && _activeAction == "validate" ? "Running..." : "Trigger")
+            </button>
+        </div>
+        <div class="action-card">
+            <div class="action-title">Seed Demo Prices</div>
+            <div class="action-desc dim">Insert 30 days of simulated price data for all companies. Use when live fetch is blocked.</div>
+            <button class="btn btn-accent" @onclick="SeedDemoPrices" disabled="@_busy">
+                @(_busy && _activeAction == "demo" ? "Running..." : "Seed Demo Data")
+            </button>
+        </div>
+    </div>
+    @if (!string.IsNullOrEmpty(_actionMessage))
+    {
+        <div class="action-result @(_actionSuccess ? "success" : "error")">@_actionMessage</div>
+    }
+</div>
+
+<!-- Briefing History -->
+<div class="panel">
+    <h3>Recent Briefings</h3>
+    @if (_briefings.Count == 0)
+    {
+        <p class="dim">No briefings generated yet.</p>
+    }
+    @foreach (var b in _briefings)
+    {
+        <div class="briefing-card">
+            <div class="briefing-meta dim">@b.CreatedAt.ToString("dd MMM yyyy HH:mm") · @b.SignalCount signals · @(b.AccuracyPct.HasValue ? $"{b.AccuracyPct:F1}% accuracy" : "no validation")</div>
+            <div class="briefing-content">@b.Content</div>
+        </div>
+    }
+</div>
+
+<!-- Push Notification Setup -->
+<div class="panel">
+    <h3>Push Notifications</h3>
+    <p class="dim">Subscriber count: <strong>@_subscriberCount</strong></p>
+    <div class="vapid-info">
+        <span class="dim">VAPID Public Key:</span>
+        <code>@(_vapidKey.Length > 20 ? _vapidKey[..20] + "..." : _vapidKey)</code>
+    </div>
+</div>
+
+@code {
+    private bool _busy;
+    private string? _activeAction;
+    private string? _actionMessage;
+    private bool _actionSuccess;
+    private List<BriefingDto> _briefings = new();
+    private int _subscriberCount;
+    private string _vapidKey = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _briefings = (await SignalService.GetBriefingsAsync(10)).ToList();
+        _subscriberCount = await NotificationService.GetSubscriberCountAsync();
+        _vapidKey = NotificationService.GetVapidPublicKey();
+    }
+
+    private async Task FetchPrices()
+    {
+        _busy = true; _activeAction = "prices"; _actionMessage = null;
+        try
+        {
+            var (companies, saved) = await MarketService.FetchAndStorePricesAsync();
+            _actionSuccess = true;
+            _actionMessage = saved > 0
+                ? $"Done — {saved} new price records saved across {companies} companies."
+                : $"Done — 0 new records from {companies} companies. Yahoo Finance may be rate-limiting or all data is already current.";
+        }
+        catch (Exception ex) { _actionSuccess = false; _actionMessage = $"Error: {ex.Message}"; }
+        finally { _busy = false; _activeAction = null; }
+    }
+
+    private async Task ProcessNews()
+    {
+        _busy = true; _activeAction = "news"; _actionMessage = null;
+        try
+        {
+            await SignalService.TriggerNewsProcessingAsync();
+            _actionSuccess = true;
+            _actionMessage = "News processed. Check AI Signals page for new signals.";
+        }
+        catch (Exception ex) { _actionSuccess = false; _actionMessage = $"Error: {ex.Message}"; }
+        finally { _busy = false; _activeAction = null; }
+    }
+
+    private async Task GenerateBriefing()
+    {
+        _busy = true; _activeAction = "briefing"; _actionMessage = null;
+        try
+        {
+            await SignalService.TriggerBriefingAsync();
+            _briefings = (await SignalService.GetBriefingsAsync(10)).ToList();
+            _actionSuccess = true;
+            _actionMessage = "Daily briefing generated successfully.";
+        }
+        catch (Exception ex) { _actionSuccess = false; _actionMessage = $"Error: {ex.Message}"; }
+        finally { _busy = false; _activeAction = null; }
+    }
+
+    private async Task ValidateSignals()
+    {
+        _busy = true; _activeAction = "validate"; _actionMessage = null;
+        try
+        {
+            await SignalService.TriggerValidationAsync();
+            _actionSuccess = true;
+            _actionMessage = "Signal validation complete.";
+        }
+        catch (Exception ex) { _actionSuccess = false; _actionMessage = $"Error: {ex.Message}"; }
+        finally { _busy = false; _activeAction = null; }
+    }
+
+    private async Task SeedDemoPrices()
+    {
+        _busy = true; _activeAction = "demo"; _actionMessage = null;
+        try
+        {
+            var companies = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions
+                .ToListAsync(Db.Companies.Where(c => c.IsActive));
+
+            var rng = new Random(42);
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            int saved = 0;
+
+            var existingKeys = (await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions
+                .ToListAsync(Db.DailyPrices.Where(p => p.Date >= today.AddDays(-35)).Select(p => new { p.Symbol, p.Date })))
+                .Select(x => $"{x.Symbol}:{x.Date}").ToHashSet();
+
+            foreach (var company in companies)
+            {
+                // Simulate a realistic base price per sector
+                decimal basePrice = company.Sector switch
+                {
+                    "Oil & Gas Exploration" => rng.Next(80, 200),
+                    "Banks" => rng.Next(20, 80),
+                    "Fertilizer" => rng.Next(50, 150),
+                    "Cement" => rng.Next(30, 120),
+                    _ => rng.Next(15, 300)
+                };
+                decimal price = basePrice;
+
+                for (int d = 30; d >= 0; d--)
+                {
+                    var date = today.AddDays(-d);
+                    var key = $"{company.Symbol}:{date}";
+                    if (existingKeys.Contains(key)) continue;
+
+                    var change = (decimal)(rng.NextDouble() * 4 - 1.8); // -1.8% to +2.2%
+                    price = Math.Max(1, price * (1 + change / 100));
+                    var high = price * (1 + (decimal)rng.NextDouble() * 0.02m);
+                    var low  = price * (1 - (decimal)rng.NextDouble() * 0.02m);
+
+                    Db.DailyPrices.Add(new DailyPrice
+                    {
+                        Symbol = company.Symbol, Date = date,
+                        Open = price, High = high, Low = low, Close = price,
+                        Volume = rng.Next(100_000, 5_000_000),
+                        ChangePct = Math.Round(change, 4)
+                    });
+                    existingKeys.Add(key);
+                    saved++;
+                }
+            }
+
+            // Seed KSE-100 index
+            decimal kse = 75000;
+            for (int d = 30; d >= 0; d--)
+            {
+                var date = today.AddDays(-d);
+                var exists = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions
+                    .AnyAsync(Db.MarketIndices, i => i.Date == date && i.IndexName == "KSE-100");
+                if (!exists)
+                {
+                    kse *= (decimal)(1 + (rng.NextDouble() * 2 - 0.8) / 100);
+                    Db.MarketIndices.Add(new MarketIndex
+                    {
+                        Date = date, IndexName = "KSE-100",
+                        Value = Math.Round(kse, 2),
+                        Change = Math.Round(kse * (decimal)(rng.NextDouble() * 0.02 - 0.008), 2),
+                        ChangePct = Math.Round((decimal)(rng.NextDouble() * 2 - 0.8), 4)
+                    });
+                }
+            }
+
+            await Db.SaveChangesAsync();
+            _actionSuccess = true;
+            _actionMessage = $"Seeded {saved} demo price records for {companies.Count} companies. Refresh the Dashboard.";
+        }
+        catch (Exception ex) { _actionSuccess = false; _actionMessage = $"Error: {ex.Message}"; }
+        finally { _busy = false; _activeAction = null; }
+    }
+}
