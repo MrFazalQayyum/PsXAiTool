@@ -115,10 +115,10 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var ta = LoadSignalsAsync();
-        var tb = LoadStatsAsync();
-        var tc = LoadConflictsAsync();
-        await Task.WhenAll(ta, tb, tc);
+        // Sequential — Blazor Server shares one DbContext per circuit
+        await LoadSignalsAsync();
+        await LoadStatsAsync();
+        await LoadConflictsAsync();
     }
 
     private async Task LoadSignalsAsync()
@@ -148,10 +148,9 @@ else
     {
         _processing = true;
         await SignalService.TriggerNewsProcessingAsync();
-        var t1 = LoadSignalsAsync();
-        var t2 = LoadStatsAsync();
-        var t3 = LoadConflictsAsync();
-        await Task.WhenAll(t1, t2, t3);
+        await LoadSignalsAsync();
+        await LoadStatsAsync();
+        await LoadConflictsAsync();
         _processing = false;
     }
 

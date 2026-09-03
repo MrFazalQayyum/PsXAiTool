@@ -177,21 +177,14 @@ else
         _loading = true;
         try
         {
-            var indicesTask = MarketService.GetIndicesAsync();
-            var moversTask = MarketService.GetTopMoversAsync(5);
-            var sectorsTask = MarketService.GetSectorsAsync();
-            var stocksTask = MarketService.GetStocksAsync();
-            await Task.WhenAll(indicesTask, moversTask, sectorsTask, stocksTask);
-            var indices = await indicesTask;
-            var movers = await moversTask;
-            var sectors = await sectorsTask;
-            var stocks = await stocksTask;
-
-            _indices = indices.ToList();
+            // Sequential — Blazor Server shares one DbContext per circuit;
+            // concurrent DB operations on the same instance throw InvalidOperationException
+            _indices = (await MarketService.GetIndicesAsync()).ToList();
+            var movers = await MarketService.GetTopMoversAsync(5);
             _gainers = movers.Where(m => m.ChangePct >= 0).OrderByDescending(m => m.ChangePct).Take(5).ToList();
-            _losers = movers.Where(m => m.ChangePct < 0).OrderBy(m => m.ChangePct).Take(5).ToList();
-            _sectors = sectors.ToList();
-            _stocks = stocks.ToList();
+            _losers  = movers.Where(m => m.ChangePct < 0).OrderBy(m => m.ChangePct).Take(5).ToList();
+            _sectors = (await MarketService.GetSectorsAsync()).ToList();
+            _stocks  = (await MarketService.GetStocksAsync()).ToList();
             _lastUpdated = DateTime.Now;
         }
         finally
