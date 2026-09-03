@@ -1,4 +1,5 @@
 using CsvHelper;
+using CsvHelper.Configuration.Attributes;
 using CsvHelper.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -23,7 +24,12 @@ public class CompanySeed(AppDbContext db, ILogger<CompanySeed> logger)
             return;
         }
 
-        var config = new CsvConfiguration(CultureInfo.InvariantCulture) { HasHeaderRecord = true };
+        var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+        {
+            HasHeaderRecord = true,
+            HeaderValidated = null,   // don't throw on unmatched headers
+            MissingFieldFound = null  // don't throw on missing columns
+        };
         using var reader = new StreamReader(csvPath);
         using var csv = new CsvReader(reader, config);
 
@@ -49,12 +55,25 @@ public class CompanySeed(AppDbContext db, ILogger<CompanySeed> logger)
 
     private class CsvCompanyRecord
     {
+        [Name("symbol")]
         public string Symbol { get; set; } = string.Empty;
+
+        [Name("yahoo_ticker")]
         public string YahooTicker { get; set; } = string.Empty;
+
+        [Name("name")]
         public string Name { get; set; } = string.Empty;
+
+        [Name("sector")]
         public string Sector { get; set; } = string.Empty;
+
+        [Name("market_cap")]
         public decimal? MarketCap { get; set; }
+
+        [Name("shares_outstanding")]
         public long? SharesOutstanding { get; set; }
+
+        [Name("is_active")]
         public bool IsActive { get; set; } = true;
     }
 }
