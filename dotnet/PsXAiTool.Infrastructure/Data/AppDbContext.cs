@@ -1,4 +1,7 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PsXAiTool.Core.Entities;
 using PsXAiTool.Core.Enums;
 
@@ -48,10 +51,21 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasIndex(a => a.Url).IsUnique();
         });
 
+        // Use explicit value converters instead of native jsonb to avoid
+        // Npgsql EmptyProjectionMember bug with List<string> JSON columns
+        var listConverter = new ValueConverter<List<string>, string>(
+            v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+            v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new List<string>());
+
+        var listComparer = new ValueComparer<List<string>>(
+            (a, b) => JsonSerializer.Serialize(a, (JsonSerializerOptions?)null) == JsonSerializer.Serialize(b, (JsonSerializerOptions?)null),
+            v => v.Aggregate(0, (h, s) => HashCode.Combine(h, s.GetHashCode())),
+            v => v.ToList());
+
         modelBuilder.Entity<Signal>(e =>
         {
-            e.Property(s => s.Entities).HasColumnType("jsonb");
-            e.Property(s => s.Sectors).HasColumnType("jsonb");
+            e.Property(s => s.Entities).HasConversion(listConverter, listComparer).HasColumnType("text");
+            e.Property(s => s.Sectors).HasConversion(listConverter, listComparer).HasColumnType("text");
             e.Property(s => s.Direction)
              .HasConversion(d => d.ToString(), s => Enum.Parse<SignalDirection>(s));
         });

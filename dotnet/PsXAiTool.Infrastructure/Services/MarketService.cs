@@ -14,29 +14,39 @@ public class MarketService(
 {
     public async Task<IReadOnlyList<IndexDto>> GetIndicesAsync()
     {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var cutoff = today.AddDays(-7);
+        var cutoff = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-7);
 
-        var indices = await db.MarketIndices
+        // Materialize first; GroupBy + Select + First() cannot be translated to SQL by Npgsql 8
+        var all = await db.MarketIndices
             .Where(i => i.Date >= cutoff)
-            .GroupBy(i => i.IndexName)
-            .Select(g => g.OrderByDescending(i => i.Date).First())
-            .OrderBy(i => i.IndexName)
+            .OrderByDescending(i => i.Date)
             .ToListAsync();
 
-        return indices.Select(i => new IndexDto(i.IndexName, i.Value, i.Change, i.ChangePct, i.Date)).ToList();
+        return all
+            .GroupBy(i => i.IndexName)
+            .Select(g => g.First())
+            .OrderBy(i => i.IndexName)
+            .Select(i => new IndexDto(i.IndexName, i.Value, i.Change, i.ChangePct, i.Date))
+            .ToList();
     }
 
     public async Task<IReadOnlyList<TopMoverDto>> GetTopMoversAsync(int count = 5)
     {
         var cutoff = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-7);
 
-        var latest = await db.DailyPrices
+        var prices = await db.DailyPrices
             .Where(p => p.Date >= cutoff && p.ChangePct.HasValue)
-            .GroupBy(p => p.Symbol)
-            .Select(g => g.OrderByDescending(p => p.Date).First())
-            .Join(db.Companies, p => p.Symbol, c => c.Symbol, (p, c) => new { p, c })
+            .OrderByDescending(p => p.Date)
             .ToListAsync();
+
+        var companies = await db.Companies.ToDictionaryAsync(c => c.Symbol);
+
+        var latest = prices
+            .GroupBy(p => p.Symbol)
+            .Select(g => g.First())
+            .Where(p => companies.ContainsKey(p.Symbol))
+            .Select(p => new { p, c = companies[p.Symbol] })
+            .ToList();
 
         var gainers = latest
             .OrderByDescending(x => x.p.ChangePct)
@@ -57,14 +67,18 @@ public class MarketService(
     {
         var cutoff = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-7);
 
-        var latest = await db.DailyPrices
+        var prices = await db.DailyPrices
             .Where(p => p.Date >= cutoff && p.ChangePct.HasValue)
-            .GroupBy(p => p.Symbol)
-            .Select(g => g.OrderByDescending(p => p.Date).First())
-            .Join(db.Companies, p => p.Symbol, c => c.Symbol, (p, c) => new { p, c })
+            .OrderByDescending(p => p.Date)
             .ToListAsync();
 
-        return latest
+        var companies = await db.Companies.ToDictionaryAsync(c => c.Symbol);
+
+        return prices
+            .GroupBy(p => p.Symbol)
+            .Select(g => g.First())
+            .Where(p => companies.ContainsKey(p.Symbol))
+            .Select(p => new { p, c = companies[p.Symbol] })
             .GroupBy(x => x.c.Sector)
             .Select(g => new SectorDto(
                 g.Key,
@@ -78,13 +92,14 @@ public class MarketService(
     {
         var cutoff = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-7);
 
-        var latestPrices = await db.DailyPrices
+        var allPrices = await db.DailyPrices
             .Where(p => p.Date >= cutoff)
-            .GroupBy(p => p.Symbol)
-            .Select(g => g.OrderByDescending(p => p.Date).First())
+            .OrderByDescending(p => p.Date)
             .ToListAsync();
 
-        var priceMap = latestPrices.ToDictionary(p => p.Symbol);
+        var priceMap = allPrices
+            .GroupBy(p => p.Symbol)
+            .ToDictionary(g => g.Key, g => g.First());
 
         var companies = await db.Companies.Where(c => c.IsActive).ToListAsync();
 
@@ -133,7 +148,6 @@ public class MarketService(
         }
 
         await db.SaveChangesAsync();
-
         await FetchIndicesAsync();
     }
 
