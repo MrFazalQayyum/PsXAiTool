@@ -27,53 +27,88 @@ def get_connection():
     )
 
 
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,*/*",
+    "Accept-Language": "en-US,en;q=0.9",
+}
+
+
 def fetch_stooq(ticker: str) -> list[tuple]:
-    """
-    Returns list of (date, open, high, low, close, volume) tuples,
-    sorted oldest-first, for the last DAYS days.
-    ticker: e.g. 'ogdc.pk', '^kse100.pk'
-    """
     url = f"https://stooq.com/q/d/l/?s={ticker}&i=d"
     try:
-        r = requests.get(url, timeout=20, headers={"User-Agent": "Mozilla/5.0"})
+        r = requests.get(url, timeout=20, headers=HEADERS)
         r.raise_for_status()
-        lines = r.text.strip().split("\n")
-        if len(lines) < 2 or lines[0].strip().startswith("No data"):
+        text = r.text.strip()
+        lines = text.split("\n")
+        if len(lines) < 2 or "No data" in text[:50] or "<html" in text[:50].lower():
+            print(f"  stooq {ticker}: unexpected response: {text[:120]!r}")
             return []
-
-        cutoff = datetime.utcnow().date() - timedelta(days=DAYS)
-        rows = []
-        for line in lines[1:]:  # skip header row
-            cols = line.strip().split(",")
-            if len(cols) < 5:
-                continue
-            try:
-                d = datetime.strptime(cols[0].strip(), "%Y-%m-%d").date()
-                if d < cutoff:
-                    continue
-                open_ = float(cols[1])
-                high  = float(cols[2])
-                low   = float(cols[3])
-                close = float(cols[4])
-                vol   = int(cols[5].strip()) if len(cols) > 5 and cols[5].strip() else 0
-                rows.append((d, open_, high, low, close, vol))
-            except (ValueError, IndexError):
-                continue
-
-        rows.reverse()  # stooq returns newest-first → reverse to oldest-first
-        return rows
+        return _parse_stooq_csv(lines)
     except Exception as e:
         print(f"  stooq error for {ticker}: {e}")
         return []
+
+
+def fetch_yahoo(yahoo_ticker: str, psx_symbol: str) -> list[tuple]:
+    import time as _time
+    period2 = int(_time.time())
+    period1 = period2 - DAYS * 86400
+    url = (f"https://query1.finance.yahoo.com/v8/finance/chart/{requests.utils.quote(yahoo_ticker)}"
+           f"?interval=1d&period1={period1}&period2={period2}")
+    try:
+        r = requests.get(url, timeout=20, headers=HEADERS)
+        r.raise_for_status()
+        data = r.json()
+        result = data["chart"]["result"][0]
+        timestamps = result["timestamp"]
+        q = result["indicators"]["quote"][0]
+        opens, highs, lows, closes, volumes = q.get("open"), q.get("high"), q.get("low"), q.get("close"), q.get("volume")
+
+        rows = []
+        for i, ts in enumerate(timestamps):
+            c = closes[i] if closes else None
+            if c is None:
+                continue
+            d = datetime.utcfromtimestamp(ts).date()
+            rows.append((d, opens[i] or c, highs[i] or c, lows[i] or c, c, volumes[i] or 0))
+        return rows
+    except Exception as e:
+        print(f"  yahoo error for {yahoo_ticker}: {e}")
+        return []
+
+
+def _parse_stooq_csv(lines: list[str]) -> list[tuple]:
+    cutoff = datetime.utcnow().date() - timedelta(days=DAYS)
+    rows = []
+    for line in lines[1:]:
+        cols = line.strip().split(",")
+        if len(cols) < 5:
+            continue
+        try:
+            d = datetime.strptime(cols[0].strip(), "%Y-%m-%d").date()
+            if d < cutoff:
+                continue
+            open_ = float(cols[1])
+            high  = float(cols[2])
+            low   = float(cols[3])
+            close = float(cols[4])
+            vol   = int(cols[5].strip()) if len(cols) > 5 and cols[5].strip() else 0
+            rows.append((d, open_, high, low, close, vol))
+        except (ValueError, IndexError):
+            continue
+    rows.reverse()
+    return rows
 
 
 def main():
     conn = get_connection()
     cur = conn.cursor()
 
-    # Load active companies
-    cur.execute('SELECT "Symbol" FROM "Companies" WHERE "IsActive" = true')
-    symbols = [row[0] for row in cur.fetchall()]
+    # Load active companies (symbol + yahoo ticker for fallback)
+    cur.execute('SELECT "Symbol", "YahooTicker" FROM "Companies" WHERE "IsActive" = true')
+    companies = cur.fetchall()  # [(symbol, yahoo_ticker), ...]
+    symbols = [r[0] for r in companies]
     print(f"Fetching prices for {len(symbols)} companies...")
 
     # Load existing (symbol, date) pairs to avoid duplicate inserts
@@ -88,15 +123,20 @@ def main():
     saved = 0
     failed = 0
 
-    for symbol in symbols:
+    for symbol, yahoo_ticker in companies:
         ticker = f"{symbol.lower()}.pk"
         rows = fetch_stooq(ticker)
 
         if not rows:
-            print(f"  {symbol}: no data from stooq")
-            failed += 1
-            time.sleep(0.3)
-            continue
+            # Fallback to Yahoo Finance
+            rows = fetch_yahoo(yahoo_ticker, symbol)
+            if rows:
+                print(f"  {symbol}: stooq empty, got {len(rows)} rows from Yahoo")
+            else:
+                print(f"  {symbol}: no data from stooq or Yahoo")
+                failed += 1
+                time.sleep(0.3)
+                continue
 
         for i, (d, open_, high, low, close, vol) in enumerate(rows):
             if (symbol, d) in existing:
