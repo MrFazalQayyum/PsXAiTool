@@ -58,13 +58,13 @@ if (!app.Environment.IsDevelopment())
 // Railway terminates TLS at its proxy — do NOT redirect to HTTPS inside the container
 app.UseCors();
 app.UseStaticFiles();
-app.UseAntiforgery();
 
 // Hangfire Dashboard (dev only — add auth middleware for production)
 if (app.Environment.IsDevelopment())
     app.UseHangfireDashboard("/hangfire");
 
 app.UseRouting();
+app.UseAntiforgery();   // must be between UseRouting() and Map*()
 app.MapControllers();
 
 app.MapRazorComponents<App>()
