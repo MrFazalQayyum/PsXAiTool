@@ -44,7 +44,7 @@ public class TwelveDataScraper(
             }
 
             var batch = batches[bi];
-            var tdSymbols = string.Join(",", batch.Select(s => $"{s}:XKAR"));
+            var tdSymbols = string.Join(",", batch.Select(s => $"{s}:PSX"));
             var url = $"https://api.twelvedata.com/time_series" +
                       $"?symbol={Uri.EscapeDataString(tdSymbols)}&interval=1day&outputsize={days}&apikey={apiKey}";
 
@@ -62,10 +62,10 @@ public class TwelveDataScraper(
                 }
                 else
                 {
-                    // Multi-symbol response: root keys are "OGDC:XKAR", "PPL:XKAR", …
+                    // Multi-symbol response: root keys are "OGDC:PSX", "PPL:PSX", …
                     foreach (var sym in batch)
                     {
-                        var key = $"{sym}:XKAR";
+                        var key = $"{sym}:PSX";
                         if (!root.TryGetProperty(key, out var symEl)) continue;
                         var prices = ParseSymbolValues(symEl, sym);
                         if (prices.Count > 0) result[sym] = prices;

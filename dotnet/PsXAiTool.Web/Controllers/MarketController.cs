@@ -16,7 +16,7 @@ public class MarketController(IMarketService market, TwelveDataScraper twelveDat
         return Ok(new
         {
             symbol,
-            source = "TwelveData (XKAR)",
+            source = "TwelveData (PSX)",
             recordsReturned = prices.Count,
             latest = prices.LastOrDefault() is { } last
                 ? new { last.Date, last.Open, last.High, last.Low, last.Close, last.Volume }
