@@ -21,20 +21,23 @@ public class MarketController(
         if (string.IsNullOrEmpty(apiKey))
             return Ok(new { error = "TWELVE_DATA_API_KEY is not set in environment variables." });
 
-        // Raw call so we can see the exact Twelve Data response
         var client = httpFactory.CreateClient();
-        var url = $"https://api.twelvedata.com/time_series?symbol={symbol}:PSX&interval=1day&outputsize=5&apikey={apiKey}";
-        var raw = await client.GetStringAsync(url);
+        string raw1, raw2;
 
-        var results = await twelveData.FetchBatchAsync([symbol], 10);
-        var prices = results.TryGetValue(symbol, out var p) ? p : [];
+        // Format 1: symbol=OGDC%3APSX (colon encoded)
+        var url1 = $"https://api.twelvedata.com/time_series?symbol={Uri.EscapeDataString(symbol + ":PSX")}&interval=1day&outputsize=5&apikey={apiKey}";
+        try { raw1 = await client.GetStringAsync(url1); } catch (Exception ex) { raw1 = ex.Message; }
+
+        // Format 2: symbol=OGDC&exchange=PSX (separate params)
+        var url2 = $"https://api.twelvedata.com/time_series?symbol={symbol}&exchange=PSX&interval=1day&outputsize=5&apikey={apiKey}";
+        try { raw2 = await client.GetStringAsync(url2); } catch (Exception ex) { raw2 = ex.Message; }
+
         return Ok(new
         {
             symbol,
-            apiKeyConfigured = true,
             apiKeyPrefix = apiKey[..Math.Min(6, apiKey.Length)] + "...",
-            twelveDataRawResponse = raw,
-            recordsReturned = prices.Count
+            format1_colonEncoded = raw1,
+            format2_separateExchange = raw2
         });
     }
 
