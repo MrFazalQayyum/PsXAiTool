@@ -1,26 +1,40 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using PsXAiTool.Core.Interfaces;
+using PsXAiTool.Core.Settings;
 using PsXAiTool.Infrastructure.Scrapers;
 
 namespace PsXAiTool.Web.Controllers;
 
 [ApiController]
 [Route("api/market")]
-public class MarketController(IMarketService market, TwelveDataScraper twelveData) : ControllerBase
+public class MarketController(
+    IMarketService market,
+    TwelveDataScraper twelveData,
+    IOptions<AppSettings> settings,
+    IHttpClientFactory httpFactory) : ControllerBase
 {
     [HttpGet("test-scraper")]
     public async Task<IActionResult> TestScraper([FromQuery] string symbol = "OGDC")
     {
+        var apiKey = settings.Value.TwelveDataApiKey;
+        if (string.IsNullOrEmpty(apiKey))
+            return Ok(new { error = "TWELVE_DATA_API_KEY is not set in environment variables." });
+
+        // Raw call so we can see the exact Twelve Data response
+        var client = httpFactory.CreateClient();
+        var url = $"https://api.twelvedata.com/time_series?symbol={symbol}:PSX&interval=1day&outputsize=5&apikey={apiKey}";
+        var raw = await client.GetStringAsync(url);
+
         var results = await twelveData.FetchBatchAsync([symbol], 10);
         var prices = results.TryGetValue(symbol, out var p) ? p : [];
         return Ok(new
         {
             symbol,
-            source = "TwelveData (PSX)",
-            recordsReturned = prices.Count,
-            latest = prices.LastOrDefault() is { } last
-                ? new { last.Date, last.Open, last.High, last.Low, last.Close, last.Volume }
-                : null
+            apiKeyConfigured = true,
+            apiKeyPrefix = apiKey[..Math.Min(6, apiKey.Length)] + "...",
+            twelveDataRawResponse = raw,
+            recordsReturned = prices.Count
         });
     }
 
